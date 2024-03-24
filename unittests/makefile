@@ -1,0 +1,22 @@
+CXX = g++-13
+COMPILER_FLAGS = -std=c++23 -O0
+INCLUDE_DIRS = -I ../src/production -I ../src/testing
+UNITS = helpers_tests monoidal_class_template_tests non_rep_combinations_tests\
+	param_pack_tests type_pack_check_tests
+EXECUTABLES = $(addprefix build/,$(UNITS))
+OBJ_FILES = $(addsuffix .o,$(EXECUTABLES))
+
+
+all: $(OBJ_FILES) $(EXECUTABLES)
+
+build/%.o: ../src/testing/%.cpp
+	$(CXX) $(COMPILER_FLAGS) $(INCLUDE_DIRS) -c $< -o $@
+
+build/%: build/%.o
+	$(CXX) $(COMPILER_FLAGS) $(INCLUDE_DIRS) $< -o $@	
+
+
+.PHONY: clean all
+
+clean:
+	rm -rf  build/*
