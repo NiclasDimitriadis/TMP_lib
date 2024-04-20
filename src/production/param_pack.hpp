@@ -58,23 +58,14 @@ constexpr inline auto pack_index_v = nt_pack_index<i, vs...>::value;
 
 
 // determines whether all elements is a non-type parameter pack are of the same type
-template<auto... is>
-struct single_type_nt_pack{
-  static_assert(false);
-};
+template<auto...>
+struct single_type_nt_pack: std::false_type{};
 
-template<auto i1, auto i2, auto... is>
-struct single_type_nt_pack<i1,i2,is...>{
-  static constexpr bool value = std::is_same_v<decltype(i1), decltype(i2)> && single_type_nt_pack<i2, is...>::value;
-};
+template<typename T, T... vs>
+struct single_type_nt_pack<vs...>: std::true_type{};
 
-template<auto i>
-struct single_type_nt_pack<i>{
-  static constexpr bool value = true;
-};
-
-template<auto... Is>
-constexpr inline bool single_type_nt_pack_v = single_type_nt_pack<Is...>::value;
+template<auto... vs>
+constexpr inline bool single_type_nt_pack_v = single_type_nt_pack<vs...>::value;
 
 
 // deduces the type of a non-type parameter pack
