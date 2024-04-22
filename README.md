@@ -119,6 +119,8 @@ Template metaprogramming library originally spun off from CppOrderBook project.
 `template<typename append_pack>`<br>
 `using append_t`<br>
 - type alias that appends different `non_type_pack` of values of type `T` to this one
+- associative operation with 'empty' non-type-pack of same type `non_type_pack<T>` as neutral element
+- `non_type_pack` is thus a monoid on a type level with `append_t` as its monoid operation
 
 ##### truncate_front_t:
 `template<size_t n>`<br>
@@ -199,6 +201,8 @@ Template metaprogramming library originally spun off from CppOrderBook project.
 `template<typename append_pack>`<br>
 `using append_t`<br>
 - type alias that appends different `type_pack_t` to this one
+- associative operation with 'empty' type-pack `type_pack_t<>` as neutral element
+- `type_pack_t` is thus a monoid on a type level with `append_t` as its monoid operation
 
 ##### truncate_front_t:
 `template<size_t n>`<br>

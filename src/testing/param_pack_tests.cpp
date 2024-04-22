@@ -16,6 +16,8 @@ static_assert(std::is_same_v<param_pack::pack_index_t<2,int,bool,float,double,ch
 
 static_assert(param_pack::pack_index_v<2,1,2,3,4,5,6> == 3);
 
+static_assert(param_pack::single_type_nt_pack_v<1,2,3,4,5>);
+static_assert(!param_pack::single_type_nt_pack_v<1,2.34,false>);
 
 using test_NTP = param_pack::non_type_pack<int,0,1,2,3,4>;
 
@@ -30,6 +32,19 @@ using test_NTP2 = test_NTP::append_t<param_pack::non_type_pack<int,5,6,7,8,9>>;
 static_assert(test_NTP2::size == 10);
 static_assert(test_NTP2::index_v<8> == 8);
 static_assert(test_NTP2::index_v<8> != 9);
+
+using neutral_element_NTP = param_pack::non_type_pack<int>;
+static_assert(std::is_same_v<test_NTP::append_t<neutral_element_NTP>, test_NTP>);
+static_assert(std::is_same_v<neutral_element_NTP::append_t<test_NTP>, test_NTP>);
+
+using assoc_test_NTP1 = param_pack::non_type_pack<int,1>;
+using assoc_test_NTP2 = param_pack::non_type_pack<int,2>;
+using assoc_test_NTP3 = param_pack::non_type_pack<int,3>;
+using assoc_test_NTP_1_2 = assoc_test_NTP1::append_t<assoc_test_NTP2>;
+using assoc_test_NTP_2_3 = assoc_test_NTP2::append_t<assoc_test_NTP3>;
+using assoc_test_NTP_1_2_3_a = assoc_test_NTP_1_2::append_t<assoc_test_NTP3>;
+using assoc_test_NTP_1_2_3_b = assoc_test_NTP1::append_t<assoc_test_NTP_2_3>;
+static_assert(std::is_same_v<assoc_test_NTP_1_2_3_a, assoc_test_NTP_1_2_3_b>);
 
 using test_NTP3 = test_NTP2::truncate_front_t<3>;
 static_assert(test_NTP3::size == 7);
@@ -46,6 +61,8 @@ using test_NTP5 = test_NTP::functor_map_t<[](int i){return i * 10;}>;
 static_assert(test_NTP5::size == 5);
 static_assert(test_NTP5::index_v<4> == 40);
 
+static_assert(std::is_same_v<neutral_element_NTP, neutral_element_NTP::functor_map_t<[](int i){return i * 10;}>>);
+
 template<int i>
 struct stretch{
     using type = param_pack::non_type_pack<int,i,i,i>;
@@ -61,6 +78,8 @@ static_assert(test_NTP6::index_v<3> == 1);
 static_assert(test_NTP6::index_v<4> == 1);
 static_assert(test_NTP6::index_v<5> == 1);
 static_assert(test_NTP6::index_v<6> == 2);
+
+static_assert(std::is_same_v<neutral_element_NTP, neutral_element_NTP::monadic_bind_t<stretch_t>>);
 
 static_assert(test_NTP::fold_v<[](int i1, int i2){return i1 + i2;},0> == 10);
 
@@ -107,6 +126,19 @@ static_assert(test_TP::size == 4);
 using test_TP3 = test_TP::append_t<test_TP2>;
 static_assert(test_TP3::size == 6);
 
+using neutral_element_TP = param_pack::type_pack_t<>;
+static_assert(std::is_same_v<test_TP, test_TP::append_t<neutral_element_TP>>);
+static_assert(std::is_same_v<test_TP, neutral_element_TP::append_t<test_TP>>);
+
+using assoc_test_TP1 = param_pack::type_pack_t<int>;
+using assoc_test_TP2 = param_pack::type_pack_t<double>;
+using assoc_test_TP3 = param_pack::type_pack_t<bool>;
+using assoc_test_TP_1_2 = assoc_test_TP1::append_t<assoc_test_TP2>;
+using assoc_test_TP_2_3 = assoc_test_TP2::append_t<assoc_test_TP3>;
+using assoc_test_TP_1_2_3_a = assoc_test_TP_1_2::append_t<assoc_test_TP3>;
+using assoc_test_TP_1_2_3_b = assoc_test_TP1::append_t<assoc_test_TP_2_3>;
+static_assert(std::is_same_v<assoc_test_TP_1_2_3_a, assoc_test_TP_1_2_3_b>);
+
 using test_TP4 = test_TP3::truncate_front_t<2>;
 static_assert(test_TP4::size == 4);
 static_assert(std::is_same_v<test_TP4::index_t<0>,bool>);
@@ -125,6 +157,8 @@ using test_TP6 = test_TP3::functor_map_t<to_size_t>;
 static_assert(std::is_same_v<test_TP6::index_t<0>, size_t>);
 static_assert(std::is_same_v<test_TP6::index_t<3>, size_t>);
 
+static_assert(std::is_same_v<neutral_element_TP, neutral_element_TP::functor_map_t<to_size_t>>);
+
 template<typename T>
 using add_const_and_ref = param_pack::type_pack_t<T, const T, T&>;
 
@@ -133,6 +167,8 @@ static_assert(test_TP7::size == 18);
 static_assert(std::is_same_v<test_TP7::index_t<1>, const int>);
 static_assert(std::is_same_v<test_TP7::index_t<2>, int&>);
 static_assert(std::is_same_v<test_TP7::index_t<10>, const size_t>);
+
+static_assert(std::is_same_v<neutral_element_TP, neutral_element_TP::monadic_bind_t<add_const_and_ref>>);
 
 using test_Var = std::variant<int, float, bool, size_t>;
 using test_TP8 = param_pack::generate_type_pack_t<test_Var>;
@@ -149,15 +185,25 @@ static_assert(std::is_same_v<test_TP9::index_t<0>,param_pack::type_pack_t<int,in
 static_assert(std::is_same_v<test_TP9::index_t<1>,param_pack::type_pack_t<float,float>>);
 static_assert(std::is_same_v<test_TP9::index_t<2>,param_pack::type_pack_t<bool,bool>>);
 
+static_assert(std::is_same_v<neutral_element_TP, neutral_element_TP::split_t<param_pack::non_type_pack<size_t>,0>::index_t<0>>);
 
 template<size_t i>
 struct has_value{
     static constexpr size_t value = i;
 };
 
+template<typename...>
+struct max_value{
+    static_assert(false);
+};
+
+template<typename T>
+struct max_value<T>{
+    static constexpr size_t value = T::value;
+};
 
 template<typename T1, typename T2>
-struct max_value{
+struct max_value<T1, T2>{
     static constexpr size_t value = std::max(T1::value, T2::value);
 };
 
@@ -165,6 +211,7 @@ using test_TP10 = param_pack::type_pack_t<has_value<1>,has_value<2>,has_value<10
 using fold_result = test_TP10::fold_t<max_value, has_value<0>>;
 static_assert(fold_result::value == 100);
 
+static_assert(neutral_element_TP::fold_t<max_value, has_value<0>>::value == 0);
 
 int main() {
   std::cout << "All test cases for param_pack.hpp compiled successfully" << "\n";
