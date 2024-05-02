@@ -8,6 +8,7 @@
 #include "helpers.hpp"
 #include "non_rep_combinations.hpp"
 
+
 namespace param_pack {
 
 // extracts the i-th type from a type-parameter pack
@@ -78,10 +79,80 @@ struct pack_type {
 template <auto... is>
 using pack_type_t = typename pack_type<is...>::type;
 
-
 template<typename T, T... vals>
 struct non_type_pack{
 private:
+
+// abridged version of type_pack_t internal to non_type_pack, avoids circular dependencies
+template<typename... Ts>
+struct type_pack_pr{
+private:
+  template<typename>
+  struct append_logic{
+    static_assert(false);
+  };
+
+  template<typename... Us>
+  struct append_logic<type_pack_pr<Us...>>{
+    using type = type_pack_pr<Ts..., Us...>;
+  };
+
+  template<template<typename...> class, typename...>
+  struct functor_map_logic{
+    using type = type_pack_pr<>;
+  };
+
+  template<template<typename...> class Class_Template, typename Fst, typename... Tail>
+  struct functor_map_logic<Class_Template, Fst, Tail...>{
+    using type = type_pack_pr<Class_Template<Fst>>::template append_t<typename functor_map_logic<Class_Template, Tail...>::type>;
+  };
+
+  template<template<typename...> class Class_Template, typename Last>
+  struct functor_map_logic<Class_Template, Last>{
+    using type = type_pack_pr<Class_Template<Last>>;
+  };
+
+  template<template<typename...> class Class_Template>
+  struct functor_map{
+    using type = functor_map_logic<Class_Template, Ts...>::type;
+  };
+
+  template<template<typename...> class F, typename Init, typename...>
+  struct fold_logic{
+    using type = F<Init>;
+  };
+
+  template<template<typename...> class F, typename First, typename Second, typename... Tail>
+  requires helpers::specializes_class_template_v<F, F<First, Second>>
+  struct fold_logic<F, First, Second, Tail...>{
+    using type = fold_logic<F, F<First, Second>, Tail...>::type;
+  };
+
+  template<template<typename...> class F, typename Second_To_Last, typename Last>
+  requires helpers::specializes_class_template_v<F, F<Second_To_Last, Last>>
+  struct fold_logic<F, Second_To_Last, Last>{
+    using type = F<Second_To_Last, Last>;
+  };
+
+public:
+    static constexpr size_t size = sizeof...(Ts);
+
+    template<size_t i>
+    using index_t = pack_index_t<i, Ts...>;
+
+    template<typename Append_Pack>
+    using append_t = append_logic<Append_Pack>::type;
+
+    template<template <typename...> class Class_Template>
+    using specialize_template_t = Class_Template<Ts...>;
+
+    template<template <typename...> class Class_Template>
+    using functor_map_t = functor_map<Class_Template>::type;
+
+    template<template<typename...> class F, typename Init>
+    using fold_t = fold_logic<F, Init, Ts...>::type;
+    };
+
     template<typename, auto...>
     struct append_logic{
       static_assert(false);
@@ -170,6 +241,48 @@ private:
       using type = functor_map_logic<callable, vals...>::type;
     };
 
+    template<typename Other_NTP>
+    requires helpers::specializes_class_template_tnt_v<non_type_pack, Other_NTP>
+    struct same_type_and_size{
+        static constexpr bool value = Other_NTP::size == sizeof...(vals) && std::is_same_v<T, typename Other_NTP::type>;
+    };
+
+    template<size_t index, size_t iter, typename TPack, T... elements>
+    struct extract_nth_element{
+        static constexpr T element = TPack::template index_t<index>::template index_v<iter>;
+        using type = extract_nth_element<index + 1, iter ,TPack, elements..., element>::type;
+    };
+
+    template<size_t iter, typename TPack, T... elements>
+    struct extract_nth_element<TPack::size, iter, TPack, elements...>{
+        using type = non_type_pack<T, elements...>;
+    };
+
+    template<template<T...> class Class_Template, size_t index, typename TPack, auto... results>
+    struct pure_logic{
+        using iter_pack = extract_nth_element<0,index,TPack>::type;
+        static constexpr auto result = iter_pack::template specialize_template_t<Class_Template>::value;
+        using type = pure_logic<Class_Template, index + 1, TPack, results..., result>::type;
+    };
+
+    template<template<T...> class Class_Template, typename TPack, auto... results>
+    struct pure_logic<Class_Template, sizeof...(vals), TPack, results...>{
+        using type = non_type_pack<pack_type_t<results...>, results...>;
+    };
+
+    template<template<T...> class Class_Template, typename Other_Packs, auto...>
+    requires Other_Packs::template functor_map_t<same_type_and_size>::template fold_t<helpers::And,std::true_type>::value
+    struct applicative_pure{
+        using type = non_type_pack<decltype(Class_Template<>::value), Class_Template<>::value>;
+    };
+
+    template<template<T...> class Class_Template, typename Other_Packs, T fst, T... tail>
+    requires Other_Packs::template functor_map_t<same_type_and_size>::template fold_t<helpers::And,std::true_type>::value
+    struct applicative_pure<Class_Template, Other_Packs, fst, tail...>{
+        using TPack = type_pack_pr<non_type_pack<T, fst, tail...>>::template append_t<Other_Packs>;
+        using type = pure_logic<Class_Template, 0, TPack>::type;
+    };
+
     template<template<auto...> class, auto...>
     struct monadic_bind_logic{
       using type = non_type_pack<T>;
@@ -191,8 +304,6 @@ private:
     struct monadic_bind{
       using type = monadic_bind_logic<Class_Template, vals...>::type;
     };
-
-
 
     template<auto fold_by, T first, T second, T... tail>
     requires std::is_invocable_r_v<T,decltype(fold_by),T,T>
@@ -248,6 +359,10 @@ public:
     // applies a callable object to every singe entry in vals in a functorial way
     template<auto callable>
     using functor_map_t = functor_map<callable>::type;
+
+    // apply a class template to multiple non_type_pack-types as an applicative functor
+    template<template<type...> class Class_Template, typename... Other_NTP_Packs>
+    using applicative_pure_t = applicative_pure<Class_Template, type_pack_pr<Other_NTP_Packs...>, vals...>::type;
 
     // applies a class template to all entries in vals in a monadic way
     template<template<T...> class Class_Template>
@@ -377,6 +492,50 @@ private:
   template<template<typename...> class Class_Template>
   struct functor_map{
     using type = functor_map_logic<Class_Template, Ts...>::type;
+  };
+
+  template<typename Other_Pack>
+  requires helpers::specializes_class_template_v<type_pack_t, Other_Pack>
+  struct same_size{
+    static constexpr bool value = sizeof...(Ts) == Other_Pack::size;
+  };
+
+  template<size_t index>
+  struct extract_nth_type{
+    template<typename Type_Pack>
+    using type = typename Type_Pack::template index_t<index>;
+  };
+
+  template<template<typename...> class Class_Template, const size_t index, typename Nested_Pack>
+  struct pure_step{
+    // generate type_pack_t of all types at index 'index' of all the packs (get 'row')
+    using intermediate_pack = Nested_Pack::template functor_map_t<extract_nth_type<index>::template type>;
+    // apply template to intermediate_pack
+    using type = intermediate_pack::template specialize_template_t<Class_Template>;
+  };
+
+  template<template<typename...> class Class_Template, const size_t index, typename Nested_Pack, typename Res_Pack>
+  struct pure_logic{
+    using iter_res_pack = type_pack_t<typename pure_step<Class_Template, index, Nested_Pack>::type>;
+    using type = pure_logic<Class_Template,index+1,Nested_Pack,typename Res_Pack::template append_t<iter_res_pack>>::type;
+  };
+
+  template<template<typename...> class Class_Template, typename Nested_Pack, typename Res_Pack>
+  struct pure_logic<Class_Template, sizeof...(Ts), Nested_Pack, Res_Pack>{
+    using type = Res_Pack;
+  };
+
+
+  template<template <typename...> class Class_Templ, typename Other_Packs, typename...>
+  requires Other_Packs::template functor_map_t<same_size>::template fold_t<helpers::And,std::true_type>::value
+  struct applicative_pure{
+    using type = type_pack_t<Class_Templ<>>;
+  };
+
+  template<template <typename...> class Class_Templ, typename Other_Packs, typename T_, typename... Ts_>
+  requires Other_Packs::template functor_map_t<same_size>::template fold_t<helpers::And,std::true_type>::value
+  struct applicative_pure<Class_Templ, Other_Packs, T_, Ts_...>{
+    using type = pure_logic<Class_Templ, 0, typename type_pack_t<type_pack_t<T_,Ts_...>>::template append_t<Other_Packs>, type_pack_t<>>::type;
   };
 
   template<template<typename...> class, typename...>
@@ -531,6 +690,10 @@ public:
   // apply a class template to Ts in a functorial way
   template<template <typename...> class Class_Template>
   using functor_map_t = functor_map<Class_Template>::type;
+
+  // apply a class template to multiple type_pack_t-types as an applicative functor
+  template<template <typename... > class Class_Template, typename... Other_Type_Packs>
+  using applicative_pure_t = applicative_pure<Class_Template, type_pack_t<Type_Packs...>,Ts...>::type;
 
   // apply a class template to Ts in a monadic way
   template<template <typename...> class Class_Template>

@@ -9,6 +9,12 @@ concept constexpr_bool_value = requires() {
   { T::value } -> std::same_as<const bool &>;
 };
 
+template<typename, typename = void>
+struct constexpr_member_value: std::false_type{};
+
+template<typename T>
+struct constexpr_member_value<T, std::void_t<decltype(T::value)>>: std::true_type{};
+
 template<typename T1, typename T2>
 requires constexpr_bool_value<T1> && constexpr_bool_value<T2>
 struct And{

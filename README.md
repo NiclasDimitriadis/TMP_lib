@@ -168,6 +168,15 @@ Template metaprogramming library originally spun off from CppOrderBook project.
 - `functor_map_t` applies `callable` to all values contained in `vals` and yields a new `non_type_pack` containing the results
 - `non_type_pack` is thus a functor on a type level 
 
+##### applicative_pure_t:
+`template<template<type...> class Class_Template, typename... Other_NTP_Packs>`<br>
+`using applicative_pure_t`<br>
+- alias template taking a class template (which in turn takes non-type paramenter of type `type`) and an arbitrary number of other `non_type_pack`-types of same type and size as the one being used
+- `Class_Template` is then specialized with the n-th values in this `non_type_pack` and all those contained `Other_NTP_Packs` for n = 0 to `size - 1`
+- all the specializations then need to contain a `constexpr` member variable `value` of the same type
+- the resulting type is a new `non_type_pack` of type `decltype(value)` and size `size`, containing all the `value`s
+- `non_type_pack` is thus an applicative functor on a type level
+
 ##### monadic_bind_t:
 `template<template<T...> class Class_Template>`<br>
 `using monadic_bind_t`<br>
@@ -233,6 +242,14 @@ Template metaprogramming library originally spun off from CppOrderBook project.
 - alias template taking a class template with a type parameter (or possibly more)
 - `functor_map_t` applies `Class_Templ` to all types contained in `Ts` and yields a new `type_pack_t` containing the results
 - `type_pack_t` is thus a functor on a type level 
+
+##### applicative_pure_t:
+`template<template<typename...> class Class_Template, typename... Other_Type_Packs>`<br>
+`using applicative_pure_t`<br>
+- alias template taking a class template (type paramenters) and an arbitrary number of other `type_pack_t`-types of same size as the one being used
+- `Class_Template` is then specialized with the n-th type in this `type_pack_t` and all those contained in `Other_Type_Packs` for n = 0 to `size - 1`
+- the resulting type is a new `type_pack_t` of size `size`, containing all the specializations
+- `type_pack_t` is thus an applicative functor on a type level
 
 ##### monadic_bind_t:
 `template<template <typename...> class Class_Template>`<br>
