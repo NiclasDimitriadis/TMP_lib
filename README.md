@@ -2,7 +2,7 @@
 Template metaprogramming library originally spun off from CppOrderBook project.
 #### components overview:
 - non_repeating_combinations: provides functionality that generates all non-repeating combinations of a specified size for all integers from 1 through n. All combinations are encapsulated consecutively in a single std::integer_sequence which can than be split and consumed.
-- param_pack: provides class templates that can wrap type and non-type parameter packs which can then be accessed and manipulated much like an array-like data structure.
+- param_pack: provides class templates that can wrap type and non-type parameter packs which can then be accessed and manipulated much like an array-like data structure. Provide interfaces for monoidal, functorial, applicative-functorial and monadic access
 - monoidal_class_template: provides static checks to enforce monoidal behavior in a class template.
 - type_pack_check: provides functionality to enforce certain properties across multiple types at compile time using either a single monoidal class template or two different templates.
 - helpers: short collection that provides functionality to other components
