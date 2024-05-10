@@ -1,4 +1,4 @@
-# TMP_lib_private
+# TMP_lib
 Template metaprogramming library originally spun off from CppOrderBook project.
 #### components overview:
 - non_repeating_combinations: provides functionality that generates all non-repeating combinations of a specified size for all integers from 1 through n. All combinations are encapsulated consecutively in a single std::integer_sequence which can than be split and consumed.
