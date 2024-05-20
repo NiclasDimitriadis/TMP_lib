@@ -425,7 +425,7 @@ private:
   };
 
   template <size_t n, typename... Us>
-    requires(n <= sizeof...(Us))
+    requires(n <= sizeof...(Ts))
   struct truncate_front_logic {
     static_assert(false);
   };
@@ -721,7 +721,7 @@ public:
   template <template <typename...> class Class_Template,
             typename... Other_Type_Packs>
   using applicative_pure_t =
-      applicative_pure<Class_Template, type_pack_t<Type_Packs...>, Ts...>::type;
+      applicative_pure<Class_Template, type_pack_t<Other_Type_Packs...>, Ts...>::type;
 
   // apply a class template to Ts in a monadic way
   template <template <typename...> class Class_Template>
