@@ -280,7 +280,7 @@ Template metaprogramming library originally spun off from CppOrderBook project.
 ### function_signature:
 - found in namespace `function_signature` in file function_signature.hpp
 - deduces the return type and argument types of a function-like from an instance of that type
-- piggybacks on `std::function`, which can be specilized/constructed from a great number of callable types
+- piggybacks on `std::function`, which can be specilized/constructed from any number of callable types
 - some credit goes to this [article](https://ventspace.wordpress.com/2022/04/11/quick-snippet-c-type-trait-templates-for-lambda-details/)
 
 #### relevant intefaces:
