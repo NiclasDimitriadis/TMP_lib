@@ -3,6 +3,7 @@ Template metaprogramming library originally spun off from CppOrderBook project.
 #### components overview:
 - non_repeating_combinations: provides functionality that generates all non-repeating combinations of a specified size for all integers from 1 through n. All combinations are encapsulated consecutively in a single std::integer_sequence which can than be split and consumed.
 - param_pack: provides class templates that can wrap type and non-type parameter packs which can then be accessed and manipulated much like an array-like data structure. Provide interfaces for monoidal, functorial, applicative-functorial and monadic access
+- function_signature: can deduce the return type and the argument type from an instance of a function-like type
 - monoidal_class_template: provides static checks to enforce monoidal behavior in a class template.
 - type_pack_check: provides functionality to enforce certain properties across multiple types at compile time using either a single monoidal class template or two different templates.
 - helpers: short collection that provides functionality to other components
@@ -274,6 +275,27 @@ Template metaprogramming library originally spun off from CppOrderBook project.
 `template<template <typename...> class Templ, size_t order>`<br>
 `using apply_templ_to_nr_combs_t`
 - computes all non-repeating combinations of size `order` from `Ts`, uses each combiation to specialize `Templ` and generates a `type_pack_t`-type containing all specializations
+---
+
+### function_signature:
+- found in namespace `function_signature` in file function_signature.hpp
+- deduces the return type and argument types of a function-like from an instance of that type
+- piggybacks on `std::function`, which can be specilized/constructed from a great number of callable types
+
+#### relevant intefaces:
+
+##### ret_type_t:
+`template<auto f>`<br>
+`requires helpers::specializes_class_template_v<std::function, decltype(std::function(f))>`<br>
+`using ret_type_t`<br>
+- deduces the return type of `f`, provided `std::function` can be constructed from `f`
+
+##### arg_types_t:
+`template<auto f>`<br>
+`requires helpers::specializes_class_template_v<std::function, decltype(std::function(f))>`<br>
+`using arg_types_t`<br>
+- generates a specialization of `param_pack::type_pack_t` containing all the argument types of `f`, provided `std::function` can be constructed from `f`
+
 ---
 
 ### monoidal_class_template:
