@@ -430,14 +430,9 @@ private:
     static_assert(false);
   };
 
-  // empty pack type if n equals the number of type contained
-  template <typename... Us> struct truncate_front_logic<sizeof...(Ts), Us...> {
-    using type = type_pack_t<>;
-  };
-
   // regular recursion step
   template <size_t n, typename U, typename... Us>
-    requires(sizeof...(Us) != sizeof...(Ts) - n - 1)
+  requires(sizeof...(Us) != sizeof...(Ts) - n - 1)
   struct truncate_front_logic<n, U, Us...> {
     using type = truncate_front_logic<n, Us...>::type;
   };
