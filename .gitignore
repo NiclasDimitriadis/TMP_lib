@@ -1,2 +1,4 @@
+*.sh
+*erged.hpp
 dump
 **/build/**
