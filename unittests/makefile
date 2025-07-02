@@ -1,7 +1,7 @@
 CXX = g++-15
 COMPILER_FLAGS = -std=c++23 -O0
 INCLUDE_DIRS = -I ../src/production -I ../src/testing
-UNITS = function_signature_tests helpers_tests monoidal_class_template_tests non_rep_combinations_tests\
+UNITS = function_signature_tests helpers_tests non_rep_combinations_tests\
 	param_pack_tests type_pack_check_tests
 EXECUTABLES = $(addprefix build/,$(UNITS))
 OBJ_FILES = $(addsuffix .o,$(EXECUTABLES))

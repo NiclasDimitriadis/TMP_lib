@@ -436,28 +436,14 @@ struct non_type_pack_convertible<T, std::void_t<generate_non_type_pack_t<T>>>
 template<typename T>
 constexpr inline bool non_type_pack_convertible_v = non_type_pack_convertible<T>::value;
 
-template <size_t n, auto i, auto... is>
-struct repeat_n_times_logic {
-   using type = repeat_n_times_logic<n - 1, i, is..., i>::type;
+template<size_t n, auto i, auto... is>
+struct repeat_n_times {
+   using type = repeat_n_times<n - 1, i, is..., i>::type;
 };
 
 template<auto i, auto... is>
-struct repeat_n_times_logic<0, i, is...>{
+struct repeat_n_times<0, i, is...> {
    using type = non_type_pack_t<is...>;
-};
-
-template<size_t n, auto i>
-using repeat_n_times_logic_t = repeat_n_times_logic<n, i>::type;
-
-template<size_t n>
-struct repeat_n_times_wrapper{
-  template<auto i>
-  using templ = repeat_n_times_logic_t<n, i>;
-};
-
-template<size_t n, auto i>
-struct repeat_n_times{
-   using type = non_type_pack_t<i>::template monadic_bind_t<typename repeat_n_times_wrapper<n>::templ>;
 };
 
 template<size_t n, auto i>

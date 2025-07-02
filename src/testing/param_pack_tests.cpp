@@ -1,4 +1,5 @@
 #include "Test_Includes.hpp"
+#include "param_pack.hpp"
 
 constexpr int a = 1;
 constexpr int b = 2;
@@ -155,6 +156,12 @@ using Test_Type = sample_templ<int(0), int(1), int(2)>;
 using Test_Type2 = std::integer_sequence<int, 0, 1, 2>;
 
 static_assert(std::is_same_v<param_pack::generate_non_type_pack_t<Test_Type>, param_pack::generate_non_type_pack_t<Test_Type2>>);
+
+// testing repeat_n_times_t
+constexpr int repeat_int = 3;
+using test_NTP8 = param_pack::non_type_pack<const int, 3,3,3,3,3>;
+using test_repeated = param_pack::repeat_n_times_t<5, repeat_int>;
+static_assert(std::is_same_v<test_NTP8, test_repeated>);
 
 // -------------------------------------------------------------
 
