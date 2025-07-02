@@ -272,13 +272,13 @@ private:
 
    // generates a specialization of type_pack_pr from the specializations of a class template from the n-th elements of this specialization of non_type_pack as well as a pack of others
    template<template<auto...> class Class_Template, typename NTPs, size_t n, typename... Applied>
-   struct apply {
+   struct apply_to_tp {
       using iter_type = apply_logic<Class_Template, NTPs, n, 0>::type;
-      using type = apply<Class_Template, NTPs, n + 1, Applied..., iter_type>::type;
+      using type = apply_to_tp<Class_Template, NTPs, n + 1, Applied..., iter_type>::type;
    };
 
    template<template<auto...> class Class_Template, typename NTPs, typename... Applied>
-   struct apply<Class_Template, NTPs, NTPs::size, Applied...> {
+   struct apply_to_tp<Class_Template, NTPs, NTPs::size, Applied...> {
       using type = type_pack_pr<Applied...>;
    };
 
@@ -296,14 +296,14 @@ private:
 
    template<template<auto...> class Class_Templ, size_t n_vals, typename... NTPs>
    requires same_size_NTPs<NTPs...>::value
-   struct applicative_pure {
-      using applied = apply<Class_Templ, type_pack_pr<NTPs...>, 0>::type;
+   struct apply {
+      using applied = apply_to_tp<Class_Templ, type_pack_pr<NTPs...>, 0>::type;
       using type = extract_values<applied, 0>::type;
    };
 
    template<template<auto...> class Class_Templ, typename... NTPs>
    requires same_size_NTPs<NTPs...>::value
-   struct applicative_pure<Class_Templ, 0, NTPs...> {
+   struct apply<Class_Templ, 0, NTPs...> {
       using content_type = decltype(Class_Templ<>::value);
       using type = non_type_pack<content_type, Class_Templ<>::value>;
    };
@@ -391,7 +391,7 @@ public:
    // functor
    template<template<auto...> class Class_Template,
       typename... Other_NTPs>
-   using applicative_pure_t = applicative_pure<Class_Template, sizeof...(vals), non_type_pack<type, vals...>, Other_NTPs...>::type;
+   using apply_t = apply<Class_Template, sizeof...(vals), non_type_pack<type, vals...>, Other_NTPs...>::type;
 
    // applies a class template to all entries in vals in a monadic way
    template<template<T...> class Class_Template>
@@ -435,6 +435,33 @@ struct non_type_pack_convertible<T, std::void_t<generate_non_type_pack_t<T>>>
 
 template<typename T>
 constexpr inline bool non_type_pack_convertible_v = non_type_pack_convertible<T>::value;
+
+template <size_t n, auto i, auto... is>
+struct repeat_n_times_logic {
+   using type = repeat_n_times_logic<n - 1, i, is..., i>::type;
+};
+
+template<auto i, auto... is>
+struct repeat_n_times_logic<0, i, is...>{
+   using type = non_type_pack_t<is...>;
+};
+
+template<size_t n, auto i>
+using repeat_n_times_logic_t = repeat_n_times_logic<n, i>::type;
+
+template<size_t n>
+struct repeat_n_times_wrapper{
+  template<auto i>
+  using templ = repeat_n_times_logic_t<n, i>;
+};
+
+template<size_t n, auto i>
+struct repeat_n_times{
+   using type = non_type_pack_t<i>::template monadic_bind_t<typename repeat_n_times_wrapper<n>::templ>;
+};
+
+template<size_t n, auto i>
+using repeat_n_times_t = repeat_n_times<n, i>::type;
 
 template<typename... Ts>
 struct type_pack_t {
@@ -565,7 +592,7 @@ private:
       typename...>
    requires Other_Packs::template
    functor_map_t<same_size>::template fold_t<
-      helpers::And, std::true_type>::value struct applicative_pure {
+      helpers::And, std::true_type>::value struct apply {
       using type = type_pack_t<Class_Templ<>>;
    };
 
@@ -573,7 +600,7 @@ private:
       typename T_, typename... Ts_>
    requires Other_Packs::template
    functor_map_t<same_size>::template fold_t<helpers::And, std::true_type>::
-      value struct applicative_pure<Class_Templ, Other_Packs, T_, Ts_...> {
+      value struct apply<Class_Templ, Other_Packs, T_, Ts_...> {
       using type = pure_logic<Class_Templ, 0,
          typename type_pack_t<
             type_pack_t<T_, Ts_...>>::template append_t<Other_Packs>,
@@ -749,7 +776,7 @@ public:
    // functor
    template<template<typename...> class Class_Template,
       typename... Other_Type_Packs>
-   using applicative_pure_t = applicative_pure<Class_Template, type_pack_t<Other_Type_Packs...>, Ts...>::type;
+   using apply_t = apply<Class_Template, type_pack_t<Other_Type_Packs...>, Ts...>::type;
 
    // apply a class template to Ts in a monadic way
    template<template<typename...> class Class_Template>

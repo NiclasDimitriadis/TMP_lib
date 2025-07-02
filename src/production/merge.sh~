@@ -1,0 +1,1 @@
+cat helpers.hpp non_rep_combinations.hpp param_pack.hpp monoidal_class_template.hpp type_pack_check.hpp function_signature.hpp all_combinations.hpp | grep -v "#pragma once" | grep -v ".hpp" > TMP_lib_merged.hpp

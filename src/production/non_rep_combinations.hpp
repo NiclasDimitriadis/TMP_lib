@@ -74,4 +74,5 @@ using non_rep_combinations_t = non_rep_combinations<n, r, false>::type;
 // for indices
 template<size_t n, size_t r>
 using non_rep_index_combinations_t = non_rep_combinations<n, r, true>::type;
-}; // namespace non_rep_combinations
+
+}; // namespace combinations
