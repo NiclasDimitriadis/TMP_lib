@@ -66,6 +66,29 @@ struct single_type_nt_pack<is...>: std::true_type {};
 template<auto... is>
 constexpr inline bool single_type_nt_pack_v = single_type_nt_pack<is...>::value;
 
+// clang compliant version of single_type_nt_pack
+template<auto...>
+struct single_type_nt_pack_clang: std::false_type {};
+
+template<auto fst, auto scnd, auto... rest>
+requires (sizeof...(rest) > 0)
+struct single_type_nt_pack_clang<fst, scnd, rest...>{
+      static constexpr bool value = std::is_same_v<decltype(fst), decltype(scnd)> && single_type_nt_pack_clang<scnd, rest...>::value;
+};
+
+template<auto fst, auto last>
+struct single_type_nt_pack_clang<fst, last>{
+      static constexpr bool value = std::is_same_v<decltype(fst), decltype(last)>;
+};
+
+template<auto only>
+struct single_type_nt_pack_clang<only>{
+      static constexpr bool value = true;
+};
+
+template<auto... is>
+constexpr bool single_type_nt_pack_clang_v =  single_type_nt_pack_clang<is...>::value;
+
 // deduces the type of a non-type parameter pack
 template<auto... is>
 requires (sizeof...(is) > 0) && single_type_nt_pack_v<is...>
@@ -437,17 +460,35 @@ template<typename T>
 constexpr inline bool non_type_pack_convertible_v = non_type_pack_convertible<T>::value;
 
 template<size_t n, auto i, auto... is>
-struct repeat_n_times {
-   using type = repeat_n_times<n - 1, i, is..., i>::type;
+struct repeat_val_n_times {
+   using type = repeat_val_n_times<n - 1, i, is..., i>::type;
 };
 
 template<auto i, auto... is>
-struct repeat_n_times<0, i, is...> {
+struct repeat_val_n_times<0, i, is...> {
    using type = non_type_pack_t<is...>;
 };
 
 template<size_t n, auto i>
-using repeat_n_times_t = repeat_n_times<n, i>::type;
+using repeat_val_n_times_t = repeat_val_n_times<n, i>::type;
+
+template<size_t n, typename NT_pack>
+struct repeat_NT_pack_n_times{
+  using type = repeat_NT_pack_n_times<n - 1, typename NT_pack::template append_t<NT_pack>>::type;
+};
+
+template<typename NT_pack>
+struct repeat_NT_pack_n_times<1, NT_pack>{
+   using type = NT_pack;
+};
+
+template<typename NT_pack>
+struct repeat_NT_pack_n_times<0, NT_pack>{
+   using type = non_type_pack<typename NT_pack::type>;
+};
+
+template<size_t n, typename NT_pack>
+using repeat_NT_pack_n_times_t = repeat_NT_pack_n_times<n, NT_pack>::type;
 
 template<typename... Ts>
 struct type_pack_t {

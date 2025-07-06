@@ -21,7 +21,14 @@ static_assert(param_pack::pack_index_v<2, 1, 2, 3, 4, 5, 6> == 3);
 
 // testing param_pack::single_type_nt_pack_v
 static_assert(param_pack::single_type_nt_pack_v<1, 2, 3, 4, 5>);
+static_assert(param_pack::single_type_nt_pack_v<3>);
 static_assert(!param_pack::single_type_nt_pack_v<1, 2.34, false>);
+
+
+// testing param_pack::single_type_nt_pack_clang_v
+static_assert(param_pack::single_type_nt_pack_clang_v<1, 2, 3, 4, 5>);
+static_assert(param_pack::single_type_nt_pack_clang_v<3>);
+static_assert(!param_pack::single_type_nt_pack_clang_v<1, 2.34, false>);
 
 // -------------------------------------------------------------
 
@@ -157,10 +164,10 @@ using Test_Type2 = std::integer_sequence<int, 0, 1, 2>;
 
 static_assert(std::is_same_v<param_pack::generate_non_type_pack_t<Test_Type>, param_pack::generate_non_type_pack_t<Test_Type2>>);
 
-// testing repeat_n_times_t
+// testing repeat_val_n_times_t
 constexpr int repeat_int = 3;
 using test_NTP8 = param_pack::non_type_pack<const int, 3,3,3,3,3>;
-using test_repeated = param_pack::repeat_n_times_t<5, repeat_int>;
+using test_repeated = param_pack::repeat_val_n_times_t<5, repeat_int>;
 static_assert(std::is_same_v<test_NTP8, test_repeated>);
 
 // -------------------------------------------------------------
