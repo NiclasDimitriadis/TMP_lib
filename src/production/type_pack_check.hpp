@@ -15,7 +15,7 @@ struct checker_aggregator_check
 template<template<typename...> class Type_Handler,
    template<typename, typename> class Aggregator, size_t order,
    typename Type_Pack>
-requires param_pack::type_pack_convertible_v<Type_Pack>
+// requires param_pack::type_pack_convertible_v<Type_Pack>
 struct checker_aggregator_check<Type_Handler, Aggregator, order, Type_Pack> {
 private:
    using type_pack = param_pack::generate_type_pack_t<Type_Pack>;
@@ -30,9 +30,24 @@ public:
    using type = tail::template fold_t<Aggregator, fst>;
 };
 
+template<template<typename...> class, template<typename...> class, auto, typename...>
+struct checker_aggregator_check_wrapper{
+  static_assert(false);
+};
+
+template<template<typename...> class Type_Handler, template<typename, typename> class Aggregator, size_t order, typename Type_Pack>
+requires param_pack::type_pack_convertible_v<Type_Pack>
+struct checker_aggregator_check_wrapper<Type_Handler, Aggregator, order, Type_Pack> {
+  using type = checker_aggregator_check<Type_Handler, Aggregator, order, Type_Pack>::type;
+};
+
+template<template<typename...> class Type_Handler, template<typename, typename> class Aggregator, size_t order, typename... Ts>
+struct checker_aggregator_check_wrapper<Type_Handler, Aggregator, order, Ts...> {
+  using type = checker_aggregator_check<Type_Handler, Aggregator, order, param_pack::type_pack_t<Ts...>>::type;
+};
+
 template<template<typename...> class Type_Handler,
    template<typename, typename> class Aggregator, size_t order,
    typename... Ts>
-using checker_aggregator_check_t = checker_aggregator_check<Type_Handler, Aggregator, order, Ts...>::type;
-
+using checker_aggregator_check_t = checker_aggregator_check_wrapper<Type_Handler, Aggregator, order, Ts...>::type;
 } // namespace type_pack_check
