@@ -79,10 +79,11 @@ constexpr inline bool specializes_class_template_tnt_v = specializes_class_templ
 // wraps a plain data type to allow for more expressively named argument types
 template<typename T>
 requires std::is_trivially_copyable_v<T> && std::is_trivially_move_constructible_v<T>
-struct trivial_wrapper{
-    T value;
-    T& operator()(){
-        return value;
-    };
+struct trivial_wrapper {
+   T value;
+
+   T& operator()() {
+      return value;
+   };
 };
 }; // namespace helpers

@@ -72,22 +72,22 @@ struct single_type_nt_pack_clang: std::false_type {};
 
 template<auto fst, auto scnd, auto... rest>
 requires (sizeof...(rest) > 0)
-struct single_type_nt_pack_clang<fst, scnd, rest...>{
-      static constexpr bool value = std::is_same_v<decltype(fst), decltype(scnd)> && single_type_nt_pack_clang<scnd, rest...>::value;
+struct single_type_nt_pack_clang<fst, scnd, rest...> {
+   static constexpr bool value = std::is_same_v<decltype(fst), decltype(scnd)> && single_type_nt_pack_clang<scnd, rest...>::value;
 };
 
 template<auto fst, auto last>
-struct single_type_nt_pack_clang<fst, last>{
-      static constexpr bool value = std::is_same_v<decltype(fst), decltype(last)>;
+struct single_type_nt_pack_clang<fst, last> {
+   static constexpr bool value = std::is_same_v<decltype(fst), decltype(last)>;
 };
 
 template<auto only>
-struct single_type_nt_pack_clang<only>{
-      static constexpr bool value = true;
+struct single_type_nt_pack_clang<only> {
+   static constexpr bool value = true;
 };
 
 template<auto... is>
-constexpr bool single_type_nt_pack_clang_v =  single_type_nt_pack_clang<is...>::value;
+constexpr bool single_type_nt_pack_clang_v = single_type_nt_pack_clang<is...>::value;
 
 // deduces the type of a non-type parameter pack
 template<auto... is>
@@ -473,17 +473,17 @@ template<size_t n, auto i>
 using repeat_val_n_times_t = repeat_val_n_times<n, i>::type;
 
 template<size_t n, typename NT_pack>
-struct repeat_NT_pack_n_times{
-  using type = repeat_NT_pack_n_times<n - 1, typename NT_pack::template append_t<NT_pack>>::type;
+struct repeat_NT_pack_n_times {
+   using type = repeat_NT_pack_n_times<n - 1, typename NT_pack::template append_t<NT_pack>>::type;
 };
 
 template<typename NT_pack>
-struct repeat_NT_pack_n_times<1, NT_pack>{
+struct repeat_NT_pack_n_times<1, NT_pack> {
    using type = NT_pack;
 };
 
 template<typename NT_pack>
-struct repeat_NT_pack_n_times<0, NT_pack>{
+struct repeat_NT_pack_n_times<0, NT_pack> {
    using type = non_type_pack<typename NT_pack::type>;
 };
 
